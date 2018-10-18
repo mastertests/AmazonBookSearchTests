@@ -15,8 +15,12 @@ public class AmazonPage {
     private final By dropdownBox = By.id("searchDropdownBox");
     private final By searchField = By.id("twotabsearchtextbox");
     private final By submitButton = By.className("nav-input");
-    private final By resultItem = By.className("s-result-item");
-    private final String dropdownItemValue = "search-alias=stripbooks";
+    private final By bookName = By.xpath("s-item-container//h2");//By.className("h2.a-size-medium.s-inline");
+    private final By bookAuthor = By.cssSelector(".a-row.a-spacing-none");
+    private final By bookPriceWhole = By.className("sx-price-whole");
+    private final By bookPriceFractional = By.className("sx-price-fractional");
+    private final By bookRatio = By.cssSelector(".a-size-base.a-color-secondary");
+    private final By bookBestSeller = By.linkText("Best Seller");
     private final WebDriver driver;
 
     public AmazonPage(WebDriver driver) {
@@ -26,32 +30,43 @@ public class AmazonPage {
 
     public List<Book> searchForBooks(String searchWords) {
         driver.findElement(dropdownBox).click();
-        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+
         Select dropdown = getSelect(driver.findElement(dropdownBox));
-        dropdown.selectByValue(dropdownItemValue);
+        dropdown.selectByVisibleText("Books");
+        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+
         driver.findElement(searchField).sendKeys(searchWords);
+        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+
         driver.findElement(submitButton).submit();
-        List<WebElement> bookItems = driver.findElements(resultItem);
-        List<Book> books = new ArrayList<Book>();
-        for (WebElement bookItem : bookItems) {
+        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+
+        List<WebElement> bookItems = new ArrayList<>();
+        List<Book> books = new ArrayList<>();
+        for (int i = 0; i < driver.findElements(bookName).size(); i++)
+            bookItems.add(driver.findElement(By.id("result_" + i)));
+
+        for (WebElement bookItem : bookItems)
             books.add(
                     new Book(
-                            bookItem.findElement(By.cssSelector("h2.a-size-medium.s-inline")).getText(),
-                            bookItem.findElement(By.cssSelector("a.a-link-normal.a-text-normal")).getText(),
+                            bookItem.findElement(bookName).getAttribute("data-attribute"),
+                            bookItem.findElement(bookAuthor).findElement(By.className("a.a-link-normal.a-text-normal")).getText(),
                             Double.valueOf(
-                                    bookItem.findElement(By.className("sx-price-whole")).getText() + "." +
-                                            bookItem.findElement(By.className("sx-price-fractional"))
+                                    bookItem.findElement(bookPriceWhole).getText() + "." +
+                                            bookItem.findElement(bookPriceFractional).getText()
                             ),
-                            bookItem.findElement(By.cssSelector("span.a-size-base.a-color-secondary")).getText(),
-                            bookItem.findElement(By.cssSelector("span.a-badge-label-inner.a-text-ellipsis")).getText().equals("Best Seller")
+                            bookItem.findElement(bookRatio).getText(),
+                            bookItem.findElements(bookBestSeller).size() > 0
                     )
             );
-        }
+
         return books;
     }
 
     private Select getSelect(WebElement element) {
         return new Select(element);
     }
+
 }
 

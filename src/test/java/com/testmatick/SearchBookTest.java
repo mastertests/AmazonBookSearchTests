@@ -25,7 +25,7 @@ public class SearchBookTest {
         } else if (browser.equals("firefox")) {
             System.setProperty("webdriver.gecko.driver", "src/test/java/com/testmatick/drivers/geckodriver.exe");
             driver = new FirefoxDriver();
-        } else {
+        } else if (browser.equals("edge")) {
             System.setProperty("webdriver.edge.driver", "src/test/java/com/testmatick/drivers/MicrosoftWebDriver.exe");
             driver = new EdgeDriver();
         }
