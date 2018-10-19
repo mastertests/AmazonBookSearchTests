@@ -2,6 +2,7 @@ package com.testmatick.pages;
 
 import com.testmatick.objects.Book;
 import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.PageFactory;
@@ -15,12 +16,6 @@ public class AmazonPage {
     private final By dropdownBox = By.id("searchDropdownBox");
     private final By searchField = By.id("twotabsearchtextbox");
     private final By submitButton = By.className("nav-input");
-    private final By bookName = By.xpath("s-item-container//h2");//By.className("h2.a-size-medium.s-inline");
-    private final By bookAuthor = By.cssSelector(".a-row.a-spacing-none");
-    private final By bookPriceWhole = By.className("sx-price-whole");
-    private final By bookPriceFractional = By.className("sx-price-fractional");
-    private final By bookRatio = By.cssSelector(".a-size-base.a-color-secondary");
-    private final By bookBestSeller = By.linkText("Best Seller");
     private final WebDriver driver;
 
     public AmazonPage(WebDriver driver) {
@@ -29,6 +24,8 @@ public class AmazonPage {
     }
 
     public List<Book> searchForBooks(String searchWords) {
+        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+
         driver.findElement(dropdownBox).click();
         driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
 
@@ -42,25 +39,43 @@ public class AmazonPage {
         driver.findElement(submitButton).submit();
         driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
 
-        List<WebElement> bookItems = new ArrayList<>();
         List<Book> books = new ArrayList<>();
-        for (int i = 0; i < driver.findElements(bookName).size(); i++)
-            bookItems.add(driver.findElement(By.id("result_" + i)));
+        for (int i = 0; i < driver.findElements(By.xpath("//li[contains(@class, 's-result-item') and contains(@class, 'celwidget')]")).size(); i++) {
+            String name = driver.findElement(By.xpath("//li[@id=\"result_" + i + "\"]")).getAttribute("data-asin");
+            Book book = new Book(
+                    driver
+                            .findElement(By.xpath("//li[@id=\"result_" + i + "\"]"))
+                            .findElement(By.xpath(".//h2"))
+                            .getText(),
 
-        for (WebElement bookItem : bookItems)
-            books.add(
-                    new Book(
-                            bookItem.findElement(bookName).getAttribute("data-attribute"),
-                            bookItem.findElement(bookAuthor).findElement(By.className("a.a-link-normal.a-text-normal")).getText(),
-                            Double.valueOf(
-                                    bookItem.findElement(bookPriceWhole).getText() + "." +
-                                            bookItem.findElement(bookPriceFractional).getText()
-                            ),
-                            bookItem.findElement(bookRatio).getText(),
-                            bookItem.findElements(bookBestSeller).size() > 0
-                    )
+                    driver
+                            .findElement(By.xpath("//li[@id=\"result_" + i + "\"]"))
+                            .findElement(By.xpath(".//div[contains(@class, 'a-row') and contains(@class, 'a-spacing-none')][2]"))
+                            .findElement(By.xpath(".//span[contains(@class, 'a-size-small') and contains(@class, 'a-color-secondary')][2]"))
+                            .getText(),
+
+//                    (double) Integer.valueOf(
+//                            driver
+//                                    .findElement(By.xpath("//li[@id=\"result_" + i + "\"]"))
+//                                    .findElement(By.xpath(".//div[contains(@class, 'a-column') and contains(@class, 'a-span7')]"))
+//                                    .findElement(By.xpath(".//div[contains(@class, 'a-row') and contains(@class, 'a-spacing-none') " +
+//                                            "and .//a[contains(@title, 'Paperback')]]/following::div[1]"))
+//                                    .findElement(By.xpath(".//a[contains(@class,'a-link-normal') and contains(@class, 'a-text-normal')] "))
+//                                    .getText().substring(1).replace(" ", "")
+//                    ) / 100 ,
+0.0,
+                    driver
+                            .findElement(By.xpath("//li[@id=\"result_" + i + "\"]"))
+                            .findElement(By.xpath(".//div[contains(@class, 'a-column') and contains(@class, 'a-span5')" +
+                                    "and contains(@class, 'a-span-last')]"))
+                            .findElement(By.xpath(".//span[contains(@name, '" + name + "')]"))
+                            .findElement(By.xpath(".//span[contains(@class, 'a-icon-alt')]"))
+                            .getText(),
+
+                    isElementPresent(By.id("BESTSELLER_" + name))
             );
-
+            books.add(book);
+        }
         return books;
     }
 
@@ -68,5 +83,13 @@ public class AmazonPage {
         return new Select(element);
     }
 
+    private boolean isElementPresent(By by) {
+        try {
+            driver.findElement(by);
+            return true;
+        } catch (NoSuchElementException e) {
+            return false;
+        }
+    }
 }
 

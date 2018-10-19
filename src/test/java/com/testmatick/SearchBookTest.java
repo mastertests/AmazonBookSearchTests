@@ -19,15 +19,20 @@ public class SearchBookTest {
     @Parameters("browser")
     @BeforeTest
     protected void setUp(String browser) {
-        if (browser.equals("chrome")) {
-            System.setProperty("webdriver.chrome.driver", "src/test/java/com/testmatick/drivers/chromedriver.exe");
-            driver = new ChromeDriver();
-        } else if (browser.equals("firefox")) {
-            System.setProperty("webdriver.gecko.driver", "src/test/java/com/testmatick/drivers/geckodriver.exe");
-            driver = new FirefoxDriver();
-        } else if (browser.equals("edge")) {
-            System.setProperty("webdriver.edge.driver", "src/test/java/com/testmatick/drivers/MicrosoftWebDriver.exe");
-            driver = new EdgeDriver();
+        switch (browser) {
+            default:
+            case "chrome":
+                System.setProperty("webdriver.chrome.driver", "src/test/java/com/testmatick/drivers/chromedriver.exe");
+                driver = new ChromeDriver();
+                break;
+            case "firefox":
+                System.setProperty("webdriver.gecko.driver", "src/test/java/com/testmatick/drivers/geckodriver.exe");
+                driver = new FirefoxDriver();
+                break;
+            case "edge":
+                System.setProperty("webdriver.edge.driver", "src/test/java/com/testmatick/drivers/MicrosoftWebDriver.exe");
+                driver = new EdgeDriver();
+                break;
         }
         driver.manage().window().maximize();
     }
