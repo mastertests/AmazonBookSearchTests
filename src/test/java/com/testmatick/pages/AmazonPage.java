@@ -15,8 +15,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class AmazonPage {
-//    private final By dropdownBox = By.id("searchDropdownBox");
-    private final By dropdownBox = By.name("url");
+    private final By dropdownBox = By.id("searchDropdownBox");
     private final By searchField = By.id("twotabsearchtextbox");
     private final By submitButton = By.className("nav-input");
     private final WebDriver driver;
@@ -32,7 +31,6 @@ public class AmazonPage {
         driver.findElement(dropdownBox).click();
         WebDriverWait wait = new WebDriverWait(driver, 10);
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//option[contains(text(), 'Books')]")));
-//        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 
         Select dropdown = getSelect(driver.findElement(dropdownBox));
         dropdown.selectByVisibleText("Books");
@@ -48,33 +46,34 @@ public class AmazonPage {
         for (int i = 0; i < driver.findElements(By.xpath("//li[contains(@class, 's-result-item') and contains(@class, 'celwidget')]")).size(); i++) {
             String dataAsin = driver.findElement(By.xpath("//li[@id=\"result_" + i + "\"]")).getAttribute("data-asin");
 
-            Book book = new Book(
-                    driver
-                            .findElement(By.xpath("//li[@id=\"result_" + i + "\"]"))
-                            .findElement(By.xpath(".//h2"))
-                            .getText(),
-
-                    driver
-                            .findElement(By.xpath("//li[@id=\"result_" + i + "\"]"))
-                            .findElement(By.xpath(".//div[contains(@class, 'a-row') and contains(@class, 'a-spacing-none')][2]"))
-                            .findElement(By.xpath(".//span[contains(@class, 'a-size-small') and contains(@class, 'a-color-secondary')][2]"))
-                            .getText(),
-
-                    (double) Integer.valueOf(
+            books.add(
+                    new Book(
                             driver
                                     .findElement(By.xpath("//li[@id=\"result_" + i + "\"]"))
-                                    .findElement(By.xpath(".//div[contains(@class, 'a-column') and contains(@class, 'a-span7')]"))
-                                    .findElement(By.xpath(".//span[contains(@aria-hidden, 'true') " +
-                                            "and contains(@class, 'a-color-base') and contains(@class, 'sx-zero-spacing')]"))
-                                    .findElement(By.xpath(".//span[contains(@class, 'sx-price') and contains( @class, 'sx-price-large')]"))
-                                    .getText().replace(" ", "").substring(1)
-                    ) / 100,
+                                    .findElement(By.xpath(".//h2"))
+                                    .getText(),
 
-                    isRatioPresentAndSet(dataAsin),
+                            driver
+                                    .findElement(By.xpath("//li[@id=\"result_" + i + "\"]"))
+                                    .findElement(By.xpath(".//div[contains(@class, 'a-row') and contains(@class, 'a-spacing-none')][2]"))
+                                    .findElement(By.xpath(".//span[contains(@class, 'a-size-small') and contains(@class, 'a-color-secondary')][2]"))
+                                    .getText(),
 
-                    isElementPresent(By.id("BESTSELLER_" + dataAsin))
+                            (double) Integer.valueOf(
+                                    driver
+                                            .findElement(By.xpath("//li[@id=\"result_" + i + "\"]"))
+                                            .findElement(By.xpath(".//div[contains(@class, 'a-column') and contains(@class, 'a-span7')]"))
+                                            .findElement(By.xpath(".//span[contains(@aria-hidden, 'true') " +
+                                                    "and contains(@class, 'a-color-base') and contains(@class, 'sx-zero-spacing')]"))
+                                            .findElement(By.xpath(".//span[contains(@class, 'sx-price') and contains( @class, 'sx-price-large')]"))
+                                            .getText().replace(" ", "").substring(1)
+                            ) / 100,
+
+                            isRatioPresentAndSet(dataAsin),
+
+                            isElementPresent(By.id("BESTSELLER_" + dataAsin))
+                    )
             );
-            books.add(book);
         }
         return books;
     }
@@ -96,7 +95,9 @@ public class AmazonPage {
         String result = "No ratio";
         if (isElementPresent(By.xpath("//span[contains(@name, '" + dataAsin + "')]"))) {
             result = driver
-                    .findElement(By.xpath("//span[contains(@data-a-popover,'{\"max-width\":\"700\",\"closeButton\":\"false\",\"position\":\"triggerBottom\",\"url\":\"/review/widgets/average-customer-review/popover/ref=acr_search__popover?ie=UTF8&asin=" + dataAsin + "&contextId=search&ref=acr_search__popover\"}')]"))
+                    .findElement(
+                            By.xpath("//span[contains(@data-a-popover,'{\"max-width\":\"700\",\"closeButton\":\"false\",\"position\":\"triggerBottom\",\"url\":\"/review/widgets/average-customer-review/popover/ref=acr_search__popover?ie=UTF8&asin=" +
+                                    dataAsin + "&contextId=search&ref=acr_search__popover\"}')]"))
                     .getText();
         }
         return result;
