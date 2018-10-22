@@ -26,7 +26,7 @@ public class AmazonPage {
     }
 
     public List<Book> searchForBooks(String searchWords) {
-        driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
+        driverWait(15);
 
         driver.findElement(dropdownBox).click();
         WebDriverWait wait = new WebDriverWait(driver, 10);
@@ -34,13 +34,13 @@ public class AmazonPage {
 
         Select dropdown = getSelect(driver.findElement(dropdownBox));
         dropdown.selectByVisibleText("Books");
-        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+        driverWait(5);
 
         driver.findElement(searchField).sendKeys(searchWords);
-        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+        driverWait(5);
 
         driver.findElement(submitButton).submit();
-        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+        driverWait(5);
 
         List<Book> books = new ArrayList<>();
         for (int i = 0; i < driver.findElements(By.xpath("//li[contains(@class, 's-result-item') and contains(@class, 'celwidget')]")).size(); i++) {
@@ -56,8 +56,7 @@ public class AmazonPage {
                             driver
                                     .findElement(By.xpath("//li[@id=\"result_" + i + "\"]"))
                                     .findElement(By.xpath(".//div[contains(@class, 'a-row') and contains(@class, 'a-spacing-none')][2]"))
-                                    .findElement(By.xpath(".//span[contains(@class, 'a-size-small') and contains(@class, 'a-color-secondary')][2]"))
-                                    .getText(),
+                                    .getText().substring(3),
 
                             (double) Integer.valueOf(
                                     driver
@@ -69,7 +68,7 @@ public class AmazonPage {
                                             .getText().replace(" ", "").substring(1)
                             ) / 100,
 
-                            isRatioPresentAndSet(dataAsin),
+                            setRatio(dataAsin),
 
                             isElementPresent(By.id("BESTSELLER_" + dataAsin))
                     )
@@ -91,16 +90,20 @@ public class AmazonPage {
         }
     }
 
-    private String isRatioPresentAndSet(String dataAsin) {
+    private String setRatio(String dataAsin) {
         String result = "No ratio";
         if (isElementPresent(By.xpath("//span[contains(@name, '" + dataAsin + "')]"))) {
             result = driver
                     .findElement(
                             By.xpath("//span[contains(@data-a-popover,'{\"max-width\":\"700\",\"closeButton\":\"false\",\"position\":\"triggerBottom\",\"url\":\"/review/widgets/average-customer-review/popover/ref=acr_search__popover?ie=UTF8&asin=" +
                                     dataAsin + "&contextId=search&ref=acr_search__popover\"}')]"))
-                    .getText();
+                    .getText().substring(0, 3);
         }
         return result;
+    }
+
+    private void driverWait(int seconds) {
+        driver.manage().timeouts().implicitlyWait(seconds, TimeUnit.SECONDS);
     }
 }
 
