@@ -6,14 +6,17 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.PageFactory;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class AmazonPage {
-    private final By dropdownBox = By.id("searchDropdownBox");
+//    private final By dropdownBox = By.id("searchDropdownBox");
+    private final By dropdownBox = By.name("url");
     private final By searchField = By.id("twotabsearchtextbox");
     private final By submitButton = By.className("nav-input");
     private final WebDriver driver;
@@ -24,10 +27,12 @@ public class AmazonPage {
     }
 
     public List<Book> searchForBooks(String searchWords) {
-        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+        driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
 
         driver.findElement(dropdownBox).click();
-        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+        WebDriverWait wait = new WebDriverWait(driver, 10);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//option[contains(text(), 'Books')]")));
+//        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 
         Select dropdown = getSelect(driver.findElement(dropdownBox));
         dropdown.selectByVisibleText("Books");
@@ -41,7 +46,8 @@ public class AmazonPage {
 
         List<Book> books = new ArrayList<>();
         for (int i = 0; i < driver.findElements(By.xpath("//li[contains(@class, 's-result-item') and contains(@class, 'celwidget')]")).size(); i++) {
-            String name = driver.findElement(By.xpath("//li[@id=\"result_" + i + "\"]")).getAttribute("data-asin");
+            String dataAsin = driver.findElement(By.xpath("//li[@id=\"result_" + i + "\"]")).getAttribute("data-asin");
+
             Book book = new Book(
                     driver
                             .findElement(By.xpath("//li[@id=\"result_" + i + "\"]"))
@@ -54,25 +60,19 @@ public class AmazonPage {
                             .findElement(By.xpath(".//span[contains(@class, 'a-size-small') and contains(@class, 'a-color-secondary')][2]"))
                             .getText(),
 
-//                    (double) Integer.valueOf(
-//                            driver
-//                                    .findElement(By.xpath("//li[@id=\"result_" + i + "\"]"))
-//                                    .findElement(By.xpath(".//div[contains(@class, 'a-column') and contains(@class, 'a-span7')]"))
-//                                    .findElement(By.xpath(".//div[contains(@class, 'a-row') and contains(@class, 'a-spacing-none') " +
-//                                            "and .//a[contains(@title, 'Paperback')]]/following::div[1]"))
-//                                    .findElement(By.xpath(".//a[contains(@class,'a-link-normal') and contains(@class, 'a-text-normal')] "))
-//                                    .getText().substring(1).replace(" ", "")
-//                    ) / 100 ,
-0.0,
-                    driver
-                            .findElement(By.xpath("//li[@id=\"result_" + i + "\"]"))
-                            .findElement(By.xpath(".//div[contains(@class, 'a-column') and contains(@class, 'a-span5')" +
-                                    "and contains(@class, 'a-span-last')]"))
-                            .findElement(By.xpath(".//span[contains(@name, '" + name + "')]"))
-                            .findElement(By.xpath(".//span[contains(@class, 'a-icon-alt')]"))
-                            .getText(),
+                    (double) Integer.valueOf(
+                            driver
+                                    .findElement(By.xpath("//li[@id=\"result_" + i + "\"]"))
+                                    .findElement(By.xpath(".//div[contains(@class, 'a-column') and contains(@class, 'a-span7')]"))
+                                    .findElement(By.xpath(".//span[contains(@aria-hidden, 'true') " +
+                                            "and contains(@class, 'a-color-base') and contains(@class, 'sx-zero-spacing')]"))
+                                    .findElement(By.xpath(".//span[contains(@class, 'sx-price') and contains( @class, 'sx-price-large')]"))
+                                    .getText().replace(" ", "").substring(1)
+                    ) / 100,
 
-                    isElementPresent(By.id("BESTSELLER_" + name))
+                    isRatioPresentAndSet(dataAsin),
+
+                    isElementPresent(By.id("BESTSELLER_" + dataAsin))
             );
             books.add(book);
         }
@@ -90,6 +90,16 @@ public class AmazonPage {
         } catch (NoSuchElementException e) {
             return false;
         }
+    }
+
+    private String isRatioPresentAndSet(String dataAsin) {
+        String result = "No ratio";
+        if (isElementPresent(By.xpath("//span[contains(@name, '" + dataAsin + "')]"))) {
+            result = driver
+                    .findElement(By.xpath("//span[contains(@data-a-popover,'{\"max-width\":\"700\",\"closeButton\":\"false\",\"position\":\"triggerBottom\",\"url\":\"/review/widgets/average-customer-review/popover/ref=acr_search__popover?ie=UTF8&asin=" + dataAsin + "&contextId=search&ref=acr_search__popover\"}')]"))
+                    .getText();
+        }
+        return result;
     }
 }
 
